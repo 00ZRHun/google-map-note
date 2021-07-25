@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Google Map Note</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="maps_api_key">AIzaSyB0CVThQriqeBGM7FnhDx_Sa0PIN6cy8MY</string>
+    <string name="default_info_title">default info title</string>
+    <string name="default_info_snippet">This is a default info snippet.</string>
+    <string name="pick_place">Pick Place</string>
+</resources>
