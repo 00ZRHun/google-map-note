@@ -103,19 +103,19 @@ public class CreateNoteActivity extends AppCompatActivity {
      */
     // [START add_marker_on_google_map]
     public void addMarker(LatLng targetAddLatLng) {
-        globalVariable.addMarker(targetAddLatLng);
+//        globalVariable.addMarker(targetAddLatLng);
     }
     // [END add_marker_on_google_map]
 
     // [START cancel_create_note_and_return_to_prev_google_map]
     public void cancelCreateNote() {
-        globalVariable.setIsCurrentMarkerInserted(false);
+//        globalVariable.setIsCurrentMarkerInserted(false);
     }
     // [END cancel_create_note_and_return_to_prev_google_map]
 
     // [START delete_marker_on_google_map]
     public void deleteMarker(LatLng targetDeleteLatLng) {
-        globalVariable.deleteMarker(targetDeleteLatLng);
+//        globalVariable.deleteMarker(targetDeleteLatLng);
     }
     // [END delete_marker_on_google_map]
     /**

@@ -2,7 +2,6 @@ package com.example.googlemapnote;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.Application;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -19,6 +18,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.googlemapnote.controllers.RetrofitClient;
+import com.example.googlemapnote.models.NoteList;
+import com.example.googlemapnote.models.Notes;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -32,10 +34,15 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Response;
 
 public class MapsActivity extends AppCompatActivity
         implements OnMapReadyCallback, Serializable {
@@ -87,7 +94,40 @@ public class MapsActivity extends AppCompatActivity
         mapFrag = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFrag.getMapAsync(this);
 
+
         createNoteIntent = new Intent(MapsActivity.this, CreateNoteActivity.class);
+    }
+
+    private void getNotes() {
+        Call<NoteList> call = RetrofitClient.getInstance().getMyApi().getNotes();
+
+        call.enqueue(new retrofit2.Callback<NoteList>() {
+
+            @Override
+            public void onResponse(Call<NoteList> call, Response<NoteList> response) {
+                NoteList notelist = response.body();
+                List<Notes> notes = notelist.getNotes();
+                Log.w("body", new Gson().toJson(notes));
+
+                for (int i = 0; i < notes.size(); i++) {
+                    Notes note = notes.get(i);
+
+                    // weird name due to clash name with Java built-in location package.
+                    List<com.example.googlemapnote.models.Location> list = note.getLocationList();
+
+                    Log.w("geolist", new Gson().toJson(list));
+                    LatLng marker = list.get(0).getLatLng(); // always get first lng and lat
+                    drawMarker(marker, note.getTitle());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<NoteList> call, Throwable t) {
+                Log.d("err", t.toString());
+                Toast.makeText(getApplicationContext(), "Error occured", Toast.LENGTH_LONG).show();
+            }
+        });
+
     }
 
     @Override
@@ -105,12 +145,23 @@ public class MapsActivity extends AppCompatActivity
         super.onResume();
 
         // clear all the prev cache data is the current selected marker is inserted
-        if(globalVariable.isCurrentMarkerInserted()) {
-            hasUserSelectedMarker = false;
-        }
+//        if(globalVariable.isCurrentMarkerInserted()) {
+//            hasUserSelectedMarker = false;
+//        }
 
         // OLD PLACE for deleted element
 
+    }
+
+    private void drawMarker(LatLng point, String title){
+        // Creating an instance of MarkerOptions
+        MarkerOptions markerOptions = new MarkerOptions();
+
+        // Setting latitude and longitude for the marker
+        markerOptions.position(point).title(title);
+
+        // Adding marker on the Google Map
+        mGoogleMap.addMarker(markerOptions);
     }
 
     @Override
@@ -153,15 +204,15 @@ public class MapsActivity extends AppCompatActivity
         // [END update_current_location_every_two_minutes]
 
         // [START add_all_existed_marker]
-        ArrayList<LatLng> allExistedMarkers = globalVariable.getMarker();
+        this.getNotes();
 
-        for (int i=0; i<allExistedMarkers.size(); i++) {
-            // VS mGoogleMap
-            googleMap.addMarker(new MarkerOptions()
-                    //.position(allExistedMarkers[i])
-                    .position(allExistedMarkers.get(i))
-                    .title("Note " + i+1));
-        }
+//        for (int i=0; i<allExistedMarkers.size(); i++) {
+//            // VS mGoogleMap
+//            googleMap.addMarker(new MarkerOptions()
+//                    //.position(allExistedMarkers[i])
+//                    .position(allExistedMarkers.get(i))
+//                    .title("Note " + i+1));
+//        }
         // [END add_all_existed_marker]
 
         // [START click_exited_marker_to_enter_into_note]
