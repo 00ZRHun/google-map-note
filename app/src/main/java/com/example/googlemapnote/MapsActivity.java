@@ -6,21 +6,33 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.googlemapnote.controllers.RetrofitClient;
-import com.example.googlemapnote.models.NoteList;
-import com.example.googlemapnote.models.Notes;
+import com.example.googlemapnote.controllers.RetrofitClient;  // API
+import com.example.googlemapnote.models.NoteList;  // API
+import com.example.googlemapnote.models.Notes;  // API
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -34,15 +46,18 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.gson.Gson;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.gson.Gson;  // API
+import com.squareup.picasso.Picasso;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
+import java.lang.reflect.Array;  // API
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Response;
+import retrofit2.Call;  // API
+import retrofit2.Response;  // API
 
 public class MapsActivity extends AppCompatActivity
         implements OnMapReadyCallback, Serializable {
@@ -74,6 +89,18 @@ public class MapsActivity extends AppCompatActivity
     Marker mCurrLocationMarker;
     FusedLocationProviderClient mFusedLocationClient;
 
+    // [START login_by_google]
+    private ImageView profile_image;
+    private TextView name;
+    private TextView email;
+    private TextView id;
+    private Button sign_out_btn;
+
+    private GoogleSignInOptions gso;
+    GoogleSignInClient mGoogleSignInClient;
+    // [END login_by_google]
+
+
     /**
      * retrieve all_existed_markers from database ***
      */
@@ -82,6 +109,42 @@ public class MapsActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        // [START login_by_google]
+        // Configure sign-in to request the user's ID, email address, and basic
+        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+
+        // Build a GoogleSignInClient with the options specified by gso.
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        /*profile_image = findViewById(R.id.profile_image);
+        name = findViewById(R.id.name);
+        email = findViewById(R.id.email);
+        id = findViewById(R.id.id);
+        sign_out_btn = findViewById(R.id.sign_out_btn);*/
+
+        /*sign_out_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.sign_out_btn:
+                        Log.d("TAG", "signOut00: ");
+                        signOut();
+                        break;
+                    // ...
+                }
+//                signOut();
+
+            }
+        });*/
+        // [END login_by_google]
+
+
+
+
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalVariable = (GlobalClass) getApplicationContext();
@@ -97,6 +160,71 @@ public class MapsActivity extends AppCompatActivity
 
         createNoteIntent = new Intent(MapsActivity.this, CreateNoteActivity.class);
     }
+
+    // [START main_menu]
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);  // pass menu as input
+//        return true;
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.logout: {
+                Log.d("TAG", "signOut00: ");
+                signOut();
+                return true;
+            }
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    // [END main_menu]
+
+    // [START login_by_google]
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        handleSignInResult();
+    }
+
+    private void signOut() {
+        Log.d("TAG", "signOut01: ");
+        mGoogleSignInClient.signOut()
+                .addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        Log.d("TAG", "signOut: ");
+                        // ...
+                        startActivity(new Intent(MapsActivity.this, LoginActivity.class));
+                        finish();
+                    }
+                });
+    }
+
+    private void handleSignInResult() {
+        //        GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(getActivity());
+        GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(this);  // *** -> ProfileActivity.this
+        if (acct != null) {
+            String personName = acct.getDisplayName();
+            String personGivenName = acct.getGivenName();
+            String personFamilyName = acct.getFamilyName();
+            String personEmail = acct.getEmail();
+            String personId = acct.getId();
+            Uri personPhoto = acct.getPhotoUrl();
+
+            /*name.setText(personName);
+            email.setText(personEmail);
+            id.setText(personId);
+            Picasso.get().load(personPhoto).placeholder(R.mipmap.ic_launcher).into(profile_image);  // profile_image*/
+        }
+    }
+    // [END login_by_google]
+
 
     private void getNotes() {
         Call<NoteList> call = RetrofitClient.getInstance().getMyApi().getNotes();
@@ -143,14 +271,6 @@ public class MapsActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-
-        // clear all the prev cache data is the current selected marker is inserted
-//        if(globalVariable.isCurrentMarkerInserted()) {
-//            hasUserSelectedMarker = false;
-//        }
-
-        // OLD PLACE for deleted element
-
     }
 
     private void drawMarker(LatLng point, String title){
@@ -206,13 +326,8 @@ public class MapsActivity extends AppCompatActivity
         // [START add_all_existed_marker]
         this.getNotes();
 
-//        for (int i=0; i<allExistedMarkers.size(); i++) {
 //            // VS mGoogleMap
-//            googleMap.addMarker(new MarkerOptions()
-//                    //.position(allExistedMarkers[i])
-//                    .position(allExistedMarkers.get(i))
-//                    .title("Note " + i+1));
-//        }
+//            googleMap
         // [END add_all_existed_marker]
 
         // [START click_exited_marker_to_enter_into_note]
@@ -458,9 +573,6 @@ public class MapsActivity extends AppCompatActivity
             startActivity(createNoteIntent);*/
 
         } else {
-            // ???
-            /*alertDialogBuilder.setMessage("Are you sure,
-                    You wanted to make decision");*/
             alertDialogBuilder.setMessage("Do you want to create note at your current location?");
             alertDialogBuilder.setPositiveButton("Yes",
                 new DialogInterface.OnClickListener() {

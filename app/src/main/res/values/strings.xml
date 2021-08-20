@@ -5,4 +5,5 @@
     <string name="default_info_title">default info title</string>
     <string name="default_info_snippet">This is a default info snippet.</string>
     <string name="pick_place">Pick Place</string>
+    <string name="logout">logout</string>
 </resources>
