@@ -15,6 +15,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.GoogleMapNote">
+        <activity android:name=".services.NotesActivity"></activity>
+        <activity android:name=".ProfileActivity" />
         <activity
             android:name=".CreateNoteActivity"
             android:parentActivityName=".MapsActivity" /> <!-- <activity android:name=".LoginActivity"></activity> -->
@@ -31,8 +33,10 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" /> <!-- android:name=".MapsActivity" -->
         <activity
-            android:name=".LoginActivity"
-            android:label="@string/title_activity_maps">
+            android:name=".MainActivity"
+            android:label="@string/title_activity_maps" /> <!-- android:theme="@style/Theme.GoogleMapNote.NoActionBar"/> -->
+        <!-- Style is very IMPORTANT, IF NOT -> Google Map Note keeps stopping -->
+        <activity android:name=".LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

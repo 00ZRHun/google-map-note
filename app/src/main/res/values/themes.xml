@@ -1,6 +1,17 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.GoogleMapNote" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <!--<style name="Theme.GoogleMapNote" parent="Theme.MaterialComponents.DayNight.DarkActionBar">-->
+    <!-- START custom_code - Method 1 -->
+    <style name="Theme.GoogleMapNote" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">false</item>
+
+        <!-- DON't KNOW WHY NOT WORK -->
+        <!--<item name="android:itemBackground">@color/black</item>
+        <item name="android:actionMenuTextColor">@color/black</item>-->
+        <!--<item name="android:textColor">#ff000f</item>-->
+        <!-- END custom_code - Method 1 -->
+
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
@@ -13,4 +24,12 @@
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <!-- START custom_code - Method 2 -->
+    <!--<style name="Theme.GoogleMapNote.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">false</item>
+    </style>-->
+    <!-- END custom_code - Method 2 -->
+
 </resources>

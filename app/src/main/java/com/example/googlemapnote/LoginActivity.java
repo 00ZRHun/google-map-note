@@ -42,7 +42,7 @@ public class LoginActivity extends AppCompatActivity {
         signInButton = findViewById(R.id.sign_in_button);
         signInButton.setSize(SignInButton.SIZE_STANDARD);
 
-//        findViewById(R.id.sign_in_button).setOnClickListener(this);
+        // register onCLick listener to sign in btn
         signInButton.setOnClickListener(new View.OnClickListener() {
             @Override  // ***
             public void onClick(View v) {
@@ -50,25 +50,13 @@ public class LoginActivity extends AppCompatActivity {
                     case R.id.sign_in_button:
                         signIn();
                         break;
-                    // ...
                 }
             }
         });
     }
 
 
-//    @Override
-//    public void onClick(View v) {
-//        switch (v.getId()) {
-//            case R.id.sign_in_button:
-//                signIn();
-//                break;
-//            // ...
-//        }
-//    }
-
-
-
+    // DON'T KNOW WHY this will coz bug
 //    @Override
 //    protected void onStart() {
 //        super.onStart();
@@ -110,7 +98,7 @@ public class LoginActivity extends AppCompatActivity {
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason.
             // Please refer to the GoogleSignInStatusCodes class reference for more information.
-            Log.w("TAG", "signInResult:failed code=" + e.getStatusCode());
+            Log.e("TAG", "signInResult:failed code=" + e.getStatusCode());
 
             Toast.makeText(this, "Login Failed!", Toast.LENGTH_SHORT).show();
             updateUI(null);
@@ -121,10 +109,8 @@ public class LoginActivity extends AppCompatActivity {
     private void updateUI(GoogleSignInAccount account) {
         Log.d("TAG", "updateUI... ");
 
-//        Intent startProfileActivity = new Intent(MainActivity.this, ProfileActivity.class);
-//
-//        startActivity();
         startActivity(new Intent(LoginActivity.this, MapsActivity.class));
+        Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show();
         finish();  // don't want come back to the main activity, just close the app
     }
 }
