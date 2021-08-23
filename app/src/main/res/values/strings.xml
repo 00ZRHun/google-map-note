@@ -1,8 +1,14 @@
 <resources>
-    <string name="app_name">Google Map Note</string>
-    <string name="title_activity_maps">Map</string>
+    <!--<string name="app_name">Google Map Note</string>-->
+    <string name="app_name">GeoNotes</string>
+    <string name="title_activity_maps">GeoMap</string>
     <string name="maps_api_key">AIzaSyB0CVThQriqeBGM7FnhDx_Sa0PIN6cy8MY</string>
     <string name="default_info_title">default info title</string>
     <string name="default_info_snippet">This is a default info snippet.</string>
     <string name="pick_place">Pick Place</string>
+    <string name="logout">logout</string>
+    <string name="navigation_drawer_open">open navigation drawer</string>
+    <string name="navigation_drawer_close">close navigation drawer</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

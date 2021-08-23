@@ -6,21 +6,32 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.googlemapnote.controllers.RetrofitClient;
-import com.example.googlemapnote.models.NoteList;
-import com.example.googlemapnote.models.Notes;
+import com.example.googlemapnote.controllers.RetrofitClient;  // API
+import com.example.googlemapnote.models.NoteList;  // API
+import com.example.googlemapnote.models.Notes;  // API
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -34,17 +45,19 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.gson.Gson;
+import com.google.gson.Gson;  // API
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Response;
+import retrofit2.Call;  // API
+import retrofit2.Response;  // API
 
-public class MapsActivity extends AppCompatActivity
+/*public class MapsActivity extends AppCompatActivity
+//public class MapsActivity extends Fragment
+        implements OnMapReadyCallback, Serializable {*/
+public class MapsActivity extends MenusActivity
+//public class MapsActivity extends Fragment
         implements OnMapReadyCallback, Serializable {
 
     public static final String UNIQUE_ID_COMBINE_LAT_LNG = "com.example.googlemapnote.mapsactivity.UNIQUE_ID_COMBINE_LAT_LNG";
@@ -79,15 +92,18 @@ public class MapsActivity extends AppCompatActivity
      */
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        // onNavigationItemSelected(navigationView.getMenu().getItem(0));  // DON'T KNOW WHY NOT WORK -> will coz this current activity will never be entered
+        /*navigationView.getMenu().getItem(0).setChecked(true);*/  // *** -> TEST LATER
+        getNavigationView().setCheckedItem(R.id.nav_maps);  // remain selecting the menu item after user click it
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalVariable = (GlobalClass) getApplicationContext();
 
         // ORI text: Map Location Activity
-        getSupportActionBar().setTitle("GeoTag Note");
+        /*getSupportActionBar().setTitle("Create Note");  // PREV: GeoTag Note*/
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -97,6 +113,7 @@ public class MapsActivity extends AppCompatActivity
 
         createNoteIntent = new Intent(MapsActivity.this, CreateNoteActivity.class);
     }
+
 
     private void getNotes() {
         Call<NoteList> call = RetrofitClient.getInstance().getMyApi().getNotes();
@@ -124,7 +141,7 @@ public class MapsActivity extends AppCompatActivity
             @Override
             public void onFailure(Call<NoteList> call, Throwable t) {
                 Log.d("err", t.toString());
-                Toast.makeText(getApplicationContext(), "Error occured", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Error occur", Toast.LENGTH_LONG).show();  // ??? <- SOMETIME GOES IN HERE ???
             }
         });
 
@@ -143,17 +160,9 @@ public class MapsActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-
-        // clear all the prev cache data is the current selected marker is inserted
-//        if(globalVariable.isCurrentMarkerInserted()) {
-//            hasUserSelectedMarker = false;
-//        }
-
-        // OLD PLACE for deleted element
-
     }
 
-    private void drawMarker(LatLng point, String title){
+    private void drawMarker(LatLng point, String title) {
         // Creating an instance of MarkerOptions
         MarkerOptions markerOptions = new MarkerOptions();
 
@@ -196,8 +205,7 @@ public class MapsActivity extends AppCompatActivity
                 //Request Location Permission
                 checkLocationPermission();
             }
-        }
-        else {
+        } else {
             mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
             mGoogleMap.setMyLocationEnabled(true);
         }
@@ -206,13 +214,8 @@ public class MapsActivity extends AppCompatActivity
         // [START add_all_existed_marker]
         this.getNotes();
 
-//        for (int i=0; i<allExistedMarkers.size(); i++) {
 //            // VS mGoogleMap
-//            googleMap.addMarker(new MarkerOptions()
-//                    //.position(allExistedMarkers[i])
-//                    .position(allExistedMarkers.get(i))
-//                    .title("Note " + i+1));
-//        }
+//            googleMap
         // [END add_all_existed_marker]
 
         // [START click_exited_marker_to_enter_into_note]
@@ -220,7 +223,7 @@ public class MapsActivity extends AppCompatActivity
             @Override
             public boolean onMarkerClick(Marker marker) {
                 if (doubleBackToExitPressedOnce) {
-                    createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, marker.getPosition().latitude+";"+marker.getPosition().longitude);
+                    createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, marker.getPosition().latitude + ";" + marker.getPosition().longitude);
                     startActivity(createNoteIntent);
                 } else {
                     doubleBackToExitPressedOnce = true;
@@ -316,6 +319,7 @@ public class MapsActivity extends AppCompatActivity
 
     // [START check_location_permission]
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+
     private void checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -336,7 +340,7 @@ public class MapsActivity extends AppCompatActivity
                                 //Prompt the user once explanation has been shown
                                 ActivityCompat.requestPermissions(MapsActivity.this,
                                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                                        MY_PERMISSIONS_REQUEST_LOCATION );
+                                        MY_PERMISSIONS_REQUEST_LOCATION);
                             }
                         })
                         .create()
@@ -347,7 +351,7 @@ public class MapsActivity extends AppCompatActivity
                 // No explanation needed, we can request the permission.
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_LOCATION );
+                        MY_PERMISSIONS_REQUEST_LOCATION);
             }
         }
     }
@@ -390,15 +394,18 @@ public class MapsActivity extends AppCompatActivity
     // [END request_permission_result]
 
     // [START to_drop_ONLY_ONE_pin]
-    /** Called when the taps the + btn */
+
+    /**
+     * Called when the taps the + btn
+     */
     public void startCreateNoteActivity(View view) {
         // show alert
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         if (hasUserSelectedMarker) {
             alertDialogBuilder.setMessage("Which location you prefer to create note?");
             alertDialogBuilder.setPositiveButton("Current Location", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface arg0, int arg1) {
+                @Override
+                public void onClick(DialogInterface arg0, int arg1) {
                             /*//You clicked yes button
                             Toast.makeText(MapsActivity.this,"Create note at current location!!!",Toast.LENGTH_LONG).show();
 
@@ -408,32 +415,32 @@ public class MapsActivity extends AppCompatActivity
                             createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, currentLat+";"+currentLng);
                             startActivity(createNoteIntent);*/
 
-                            toastText = "Create note at current location!!!";
-                            latLngValue = currentLat+";"+currentLng;
-                            Toast.makeText(MapsActivity.this, toastText, Toast.LENGTH_LONG).show();
+                    toastText = "Create note at current location!!!";
+                    latLngValue = currentLat + ";" + currentLng;
+                    Toast.makeText(MapsActivity.this, toastText, Toast.LENGTH_LONG).show();
 
-                            // start new activity by using intent
-                            Intent createNoteIntent = new Intent(MapsActivity.this, CreateNoteActivity.class);
-                            // ??? <<<=== ???
-                            createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, selectedLat+";"+selectedLng);
-                            //createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, latLngValue);
+                    // start new activity by using intent
+                    Intent createNoteIntent = new Intent(MapsActivity.this, CreateNoteActivity.class);
+                    // ??? <<<=== ???
+                    createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, selectedLat + ";" + selectedLng);
+                    //createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, latLngValue);
 
-                            //createNoteIntent.putExtra(GOOGLE_MAP, (Serializable) mGoogleMap);
-                            /*Bundle gm = new Bundle(mGoogleMap);*/
-                            startActivity(createNoteIntent);
-                        }
-                    });
+                    //createNoteIntent.putExtra(GOOGLE_MAP, (Serializable) mGoogleMap);
+                    /*Bundle gm = new Bundle(mGoogleMap);*/
+                    startActivity(createNoteIntent);
+                }
+            });
 
             alertDialogBuilder.setNegativeButton("Selected Location", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     toastText = "Create note at selected location!!!";
-                    latLngValue = selectedLat+";"+selectedLng;
+                    latLngValue = selectedLat + ";" + selectedLng;
                     Toast.makeText(MapsActivity.this, toastText, Toast.LENGTH_LONG).show();
 
                     // start new activity by using intent
                     Intent createNoteIntent = new Intent(MapsActivity.this, CreateNoteActivity.class);
-                    createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, selectedLat+";"+selectedLng);
+                    createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, selectedLat + ";" + selectedLng);
                     //createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, latLngValue);
                     //createNoteIntent.putExtra(ALL_EXISTED_MARKERS, allExistedMarkers);
 
@@ -448,6 +455,7 @@ public class MapsActivity extends AppCompatActivity
                 }
             });
 
+            // DON'T KNOW WHY NOT WORK
             /*// Both of the if-else case run below code block
             Toast.makeText(MapsActivity.this, toastText, Toast.LENGTH_LONG).show();
 
@@ -458,22 +466,19 @@ public class MapsActivity extends AppCompatActivity
             startActivity(createNoteIntent);*/
 
         } else {
-            // ???
-            /*alertDialogBuilder.setMessage("Are you sure,
-                    You wanted to make decision");*/
             alertDialogBuilder.setMessage("Do you want to create note at your current location?");
             alertDialogBuilder.setPositiveButton("Yes",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface arg0, int arg1) {
-                        //You clicked yes button
-                        Toast.makeText(MapsActivity.this,"Click note here!!!",Toast.LENGTH_LONG).show();
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface arg0, int arg1) {
+                            //You clicked yes button
+                            Toast.makeText(MapsActivity.this, "Click note here!!!", Toast.LENGTH_LONG).show();
 
-                        // start new activity by using intent
-                        createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, currentLat+";"+currentLng);
-                        startActivity(createNoteIntent);
-                    }
-            });
+                            // start new activity by using intent
+                            createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, currentLat + ";" + currentLng);
+                            startActivity(createNoteIntent);
+                        }
+                    });
 
             alertDialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
                 @Override
