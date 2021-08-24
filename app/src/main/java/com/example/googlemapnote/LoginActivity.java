@@ -9,6 +9,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.example.googlemapnote.controllers.RetrofitClient;
+import com.example.googlemapnote.models.User;
+import com.example.googlemapnote.models.UserResponse;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -16,6 +19,11 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
+import com.google.gson.Gson;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -91,9 +99,8 @@ public class LoginActivity extends AppCompatActivity {
 
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
-            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-
-            // Signed in successfully, show authenticated UI.
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);// Signed in successfully, show authenticated UI.
+            handleLogin(account);
             updateUI(account);
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason.
@@ -108,9 +115,34 @@ public class LoginActivity extends AppCompatActivity {
 
     private void updateUI(GoogleSignInAccount account) {
         Log.d("TAG", "updateUI... ");
-
         startActivity(new Intent(LoginActivity.this, MapsActivity.class));
-        Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show();
         finish();  // don't want come back to the main activity, just close the app
+    }
+
+    private void handleLogin(GoogleSignInAccount account) {
+        User user = new User();
+        user.setUsername(account.getDisplayName());
+        user.setEmail(account.getEmail());
+        user.setAccessToken("hardcode_token");
+        Call<UserResponse> call = RetrofitClient.getInstance().getMyApi().login(user);
+
+        call.enqueue(new retrofit2.Callback<UserResponse>() {
+            @Override
+            public void onResponse(Call<UserResponse> call, retrofit2.Response<UserResponse> response) {
+                if(response.isSuccessful()) {
+                    Log.w("Login response", new Gson().toJson(response.body()));
+                    Toast.makeText(getApplicationContext(), "Login Successful", Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.w("Login failed", "Failed");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserResponse> call, Throwable t) {
+                Log.d("Login failed", t.toString());
+                Toast.makeText(getApplicationContext(), "Error occur", Toast.LENGTH_LONG).show();  // ??? <- SOMETIME GOES IN HERE ???
+            }
+        });
+
     }
 }
