@@ -1,10 +1,13 @@
-package com.example.googlemapnote.models;
+package com.example.googlemapnote.models.notes;
 
+import com.example.googlemapnote.models.location.Location;
+import com.example.googlemapnote.models.tag.Tag;
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Notes {
+public class Note implements Serializable {
 
     @SerializedName("title")
     private String title;
@@ -15,11 +18,21 @@ public class Notes {
     @SerializedName("user_id")
     private int userId;
 
+    @SerializedName("id")
+    private int id;
+
     @SerializedName("locations")
     private List<Location> locationList;
 
-    public Notes(String title) {
-        this.title = title;
+    @SerializedName("tags")
+    private List<Tag> tagList;
+
+    public List<Tag> getTagList() {
+        return tagList;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getTitle() {

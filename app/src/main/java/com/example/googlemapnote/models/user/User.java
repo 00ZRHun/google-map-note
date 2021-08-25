@@ -1,4 +1,4 @@
-package com.example.googlemapnote.models;
+package com.example.googlemapnote.models.user;
 
 import com.google.gson.annotations.SerializedName;
 

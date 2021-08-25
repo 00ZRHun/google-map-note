@@ -1,4 +1,4 @@
-package com.example.googlemapnote.services;
+package com.example.googlemapnote;
 
 import androidx.appcompat.app.AppCompatActivity;
 

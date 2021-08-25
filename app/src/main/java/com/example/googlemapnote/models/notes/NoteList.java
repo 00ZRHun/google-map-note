@@ -1,4 +1,4 @@
-package com.example.googlemapnote.models;
+package com.example.googlemapnote.models.notes;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -6,9 +6,9 @@ import java.util.List;
 
 public class NoteList {
     @SerializedName("data")
-    private List<Notes> notes;
+    private List<Note> notes;
 
-    public List<Notes> getNotes() {
+    public List<Note> getNotes() {
         return notes;
     }
 }

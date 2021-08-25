@@ -2,36 +2,25 @@ package com.example.googlemapnote;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.googlemapnote.controllers.RetrofitClient;  // API
-import com.example.googlemapnote.models.NoteList;  // API
-import com.example.googlemapnote.models.Notes;  // API
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.example.googlemapnote.models.notes.NoteList;  // API
+import com.example.googlemapnote.models.notes.Note;  // API
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -60,6 +49,9 @@ public class MapsActivity extends MenusActivity
 //public class MapsActivity extends Fragment
         implements OnMapReadyCallback, Serializable {
 
+    public static final String EDIT_NOTE_INTENT = "com.example.googlemapnote.EDIT";
+    public static final String EDIT_MARKER_POINT_INTENT = "com.example.googlemapnote.EDIT_MARKER_POINT";
+
     public static final String UNIQUE_ID_COMBINE_LAT_LNG = "com.example.googlemapnote.mapsactivity.UNIQUE_ID_COMBINE_LAT_LNG";
     private static final String TAG = "MapsActivity";   // for debug purpose
 
@@ -76,11 +68,14 @@ public class MapsActivity extends MenusActivity
     private String latLngValue;
 
     private int userClickToAddMarkerTimes = 0;
-    private Marker markerName;
+    static Marker markerName;
+    static Marker selectedMarker;
 
     private GlobalClass globalVariable;
 
-    GoogleMap mGoogleMap;
+    private BroadcastReceiver receiver;
+
+    static GoogleMap mGoogleMap;
     SupportMapFragment mapFrag;
     LocationRequest mLocationRequest;
     Location mLastLocation;
@@ -110,8 +105,8 @@ public class MapsActivity extends MenusActivity
         mapFrag = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFrag.getMapAsync(this);
 
-
         createNoteIntent = new Intent(MapsActivity.this, CreateNoteActivity.class);
+
     }
 
 
@@ -123,18 +118,18 @@ public class MapsActivity extends MenusActivity
             @Override
             public void onResponse(Call<NoteList> call, Response<NoteList> response) {
                 NoteList notelist = response.body();
-                List<Notes> notes = notelist.getNotes();
+                List<Note> notes = notelist.getNotes();
                 Log.w("body", new Gson().toJson(notes));
 
                 for (int i = 0; i < notes.size(); i++) {
-                    Notes note = notes.get(i);
+                    Note note = notes.get(i);
 
                     // weird name due to clash name with Java built-in location package.
-                    List<com.example.googlemapnote.models.Location> list = note.getLocationList();
+                    List<com.example.googlemapnote.models.location.Location> list = note.getLocationList();
 
                     Log.w("geolist", new Gson().toJson(list));
                     LatLng marker = list.get(0).getLatLng(); // always get first lng and lat
-                    drawMarker(marker, note.getTitle());
+                    drawMarker(marker, note);
                 }
             }
 
@@ -162,15 +157,30 @@ public class MapsActivity extends MenusActivity
         super.onResume();
     }
 
-    private void drawMarker(LatLng point, String title) {
+    private static void drawMarker(LatLng point, Note note) {
         // Creating an instance of MarkerOptions
         MarkerOptions markerOptions = new MarkerOptions();
 
         // Setting latitude and longitude for the marker
-        markerOptions.position(point).title(title);
+        markerOptions.position(point).title(note.getTitle());
 
         // Adding marker on the Google Map
-        mGoogleMap.addMarker(markerOptions);
+        mGoogleMap.addMarker(markerOptions).setTag(note);
+    }
+
+    public static void updateMarker(Note note) {
+        // Creating an instance of MarkerOptions
+        MarkerOptions markerOptions = new MarkerOptions();
+
+        // Setting latitude and longitude for the marker
+        markerOptions.position(selectedMarker.getPosition()).title(note.getTitle());
+
+        Log.w("xxxx", new Gson().toJson(note));
+
+        if(selectedMarker != null)
+            selectedMarker.remove();
+
+        drawMarker(selectedMarker.getPosition(), note);
     }
 
     @Override
@@ -223,8 +233,17 @@ public class MapsActivity extends MenusActivity
             @Override
             public boolean onMarkerClick(Marker marker) {
                 if (doubleBackToExitPressedOnce) {
-                    createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, marker.getPosition().latitude + ";" + marker.getPosition().longitude);
-                    startActivity(createNoteIntent);
+                    if(marker.getTag() != null) {
+                        Log.d("MarkerTag", new Gson().toJson(marker.getTag()));
+                        selectedMarker = marker;
+                        Note note = (Note) marker.getTag();
+                        Intent editNoteIntent = new Intent(getApplicationContext(), EditNoteActivity.class);
+                        editNoteIntent.putExtra(EDIT_NOTE_INTENT, note);
+
+                        startActivity(editNoteIntent);
+                    }
+//                    createNoteIntent.putExtra(UNIQUE_ID_COMBINE_LAT_LNG, marker.getPosition().latitude + ";" + marker.getPosition().longitude);
+//                    startActivity(createNoteIntent);
                 } else {
                     doubleBackToExitPressedOnce = true;
 
@@ -270,6 +289,8 @@ public class MapsActivity extends MenusActivity
                 // Update latitude and longitude TEMP value
                 selectedLat = latLng.latitude;
                 selectedLng = latLng.longitude;
+
+                selectedMarker = markerName;
 
                 // set user have selected one marker on Google Map
                 hasUserSelectedMarker = true;
@@ -493,4 +514,12 @@ public class MapsActivity extends MenusActivity
 
     }
     // [END to_drop_ONLY_ONE_pin]
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+
 }

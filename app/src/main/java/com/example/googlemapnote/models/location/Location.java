@@ -1,9 +1,11 @@
-package com.example.googlemapnote.models;
+package com.example.googlemapnote.models.location;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.annotations.SerializedName;
 
-public class Location {
+import java.io.Serializable;
+
+public class Location implements Serializable {
     @SerializedName("id")
     private int id;
 

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".CreateNoteActivity">
+    tools:context=".EditNoteActivity">
 
     <!--    android:tooltipText=""-->
 
@@ -23,19 +23,9 @@
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
         android:onClick="cancelCreateNote"
-        android:text="Cancel"
+        android:text="@string/btn_cancel"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/buttonAddNote"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:text="Add Note"
-        android:onClick="addNewNote"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
     <EditText
         android:id="@+id/edit_txt_name"
@@ -47,9 +37,9 @@
         android:layout_marginEnd="20dp"
         android:layout_marginRight="20dp"
         android:background="@color/gray"
-        android:contentDescription="Name"
+        android:contentDescription="@string/name_lbl"
         android:ems="10"
-        android:hint="Name"
+        android:hint="@string/name_lbl"
         android:inputType="textPersonName"
         android:padding="10dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -68,7 +58,7 @@
         android:layout_marginRight="20dp"
         android:background="@color/gray"
         android:ems="10"
-        android:hint='Tags, separated tag with ","'
+        android:hint="@string/tags_separated_tag_with"
         android:inputType="textPersonName"
         android:padding="10dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -89,7 +79,7 @@
         android:background="@color/gray"
         android:ems="10"
         android:gravity="start|top"
-        android:hint="Write something here. Shake to clear all text."
+        android:hint="@string/content_hint"
         android:inputType="textMultiLine"
         android:scrollHorizontally="false"
         android:padding="10dp"
@@ -112,7 +102,7 @@
         app:backgroundTint="@color/black"
         app:icon="@drawable/function"
         app:iconTint="@color/white"
-        app:layout_constraintBottom_toTopOf="@+id/buttonAddNote"
+        app:layout_constraintBottom_toTopOf="@+id/btn_edit"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -129,17 +119,29 @@
         app:layout_constraintEnd_toEndOf="@+id/setting_parent_fab"
         app:srcCompat="@drawable/image"
         app:tint="@color/black" />
-    <!--Action name text for the add alarm button-->
 
     <TextView
         android:id="@+id/ocr_action_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
-        android:text="Image to text"
+        android:text="@string/image_to_text"
         app:layout_constraintBottom_toBottomOf="@+id/ocr_fab"
         app:layout_constraintEnd_toStartOf="@+id/ocr_fab"
         app:layout_constraintTop_toTopOf="@+id/ocr_fab"
         android:layout_marginRight="8dp" />
+
+    <Button
+        android:id="@+id/btn_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="8dp"
+        android:autoText="false"
+        android:onClick="updateNote"
+        android:text="@string/btn_edit_lbl"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

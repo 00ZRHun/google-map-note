@@ -10,8 +10,8 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.example.googlemapnote.controllers.RetrofitClient;
-import com.example.googlemapnote.models.User;
-import com.example.googlemapnote.models.UserResponse;
+import com.example.googlemapnote.models.user.User;
+import com.example.googlemapnote.models.user.UserResponse;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -19,11 +19,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
-import com.google.gson.Gson;
 
-import okhttp3.ResponseBody;
 import retrofit2.Call;
-import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -130,7 +127,9 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<UserResponse> call, retrofit2.Response<UserResponse> response) {
                 if(response.isSuccessful()) {
-                    Log.w("Login response", new Gson().toJson(response.body()));
+                    UserResponse resUser = response.body();
+                    User resultUser = resUser.getUser();
+                    GlobalClass.getInstance().setCurrentUser(resultUser);
                     Toast.makeText(getApplicationContext(), "Login Successful", Toast.LENGTH_SHORT).show();
                 } else {
                     Log.w("Login failed", "Failed");

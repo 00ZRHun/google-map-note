@@ -1,11 +1,13 @@
 package com.example.googlemapnote;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -16,25 +18,27 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.googlemapnote.controllers.RetrofitClient;
-import com.example.googlemapnote.models.location.NewLocationRequest;
-import com.example.googlemapnote.models.notes.NewNoteRequest;
 import com.example.googlemapnote.models.notes.Note;
 import com.example.googlemapnote.models.notes.NoteResponse;
+import com.example.googlemapnote.models.notes.UpdateNoteBody;
+import com.example.googlemapnote.models.notes.UpdateNoteRequest;
+import com.example.googlemapnote.models.tag.Tag;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import retrofit2.Call;
 
-public class CreateNoteActivity extends AppCompatActivity {
+public class EditNoteActivity extends AppCompatActivity {
 
-    private double latitudeDouble;
-    private double longitudeDouble;
-    private String uniqueIdCombineLatLng;
-    private LatLng currentLatLng;
+    private int noteId;
 
     private EditText txtName;
     private EditText txtTags;
@@ -44,7 +48,7 @@ public class CreateNoteActivity extends AppCompatActivity {
     private ExtendedFloatingActionButton fabParentSetting;
     private TextView ocrActionText;
 
-    private Button btnAddNote;
+    private Button btnEditNote;
 
     Boolean isFabsVisible;
 
@@ -55,31 +59,56 @@ public class CreateNoteActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create_note);
+        setContentView(R.layout.activity_update_note);
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalVariable = (GlobalClass) getApplicationContext();
 
         // [START get_data_from_MapsActivity_intent]
-        Intent getDataFromMapsActivityIntent = getIntent();
+        Intent intent = getIntent();
 
-        // get data of UNIQUE_LAT_LNG and GOOGLE_MAP
-        uniqueIdCombineLatLng = getDataFromMapsActivityIntent.getStringExtra(MapsActivity.UNIQUE_ID_COMBINE_LAT_LNG);
-
-        // separate latitudeDouble and longitudeDouble from UNIQUE_LAT_LNG
-        String[] latLngArr = uniqueIdCombineLatLng.split(";");
-        String latitudeStr = latLngArr[0];
-        String longitudeStr = latLngArr[1];
-        latitudeDouble = Double.parseDouble(latitudeStr);
-        longitudeDouble = Double.parseDouble(longitudeStr);
-        currentLatLng = new LatLng(latitudeDouble, longitudeDouble);
+        Note note = (Note) intent.getExtras().getSerializable(MapsActivity.EDIT_NOTE_INTENT);
+        noteId = note.getId();
+        List<Tag> tagList = note.getTagList();
 
         /* [Start UI initialize] */
-
         // text field
         txtName = findViewById(R.id.edit_txt_name);
+        txtName.setText(note.getTitle());
+
         txtTags = findViewById(R.id.edit_txt_tags);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            String tags = tagList
+                    .stream()
+                    .map(t -> String.valueOf(t.getTag()))
+                    .collect(Collectors.joining(", "));
+            txtTags.setText(tags);
+        } else {
+            StringBuilder str = new StringBuilder("");
+
+            // Traversing the ArrayList
+            for (Tag t : tagList) {
+
+                // Each element in ArrayList is appended
+                // followed by comma
+                str.append(t.getTag()).append(",");
+            }
+
+            // StringBuffer to String conversion
+            String commaseparatedlist = str.toString();
+
+            // By following condition you can remove the last
+            // comma
+            if (commaseparatedlist.length() > 0)
+                commaseparatedlist
+                        = commaseparatedlist.substring(
+                        0, commaseparatedlist.length() - 1);
+
+            txtTags.setText(commaseparatedlist);
+        }
+
         txtContent = findViewById(R.id.edit_txt_content);
+        txtContent.setText(note.getDescription());
 
         // fab
         ocrActionText = findViewById(R.id.ocr_action_text);
@@ -87,7 +116,7 @@ public class CreateNoteActivity extends AppCompatActivity {
         fabParentSetting = findViewById(R.id.setting_parent_fab);
 
         // btn
-        btnAddNote = findViewById(R.id.buttonAddNote);
+        btnEditNote = findViewById(R.id.btn_edit);
 
         /* [END UI initialize] */
 
@@ -182,30 +211,24 @@ public class CreateNoteActivity extends AppCompatActivity {
         }
     }
 
-    public void addNewNote(View view) {
+    public void updateNote(View view) {
         String name = txtName.getText().toString();
         String[] tagStrArr = txtTags.getText().toString().split(",");
         String content = txtContent.getText().toString();
         int userId = GlobalClass.getInstance().getCurrentUser().getId();
 
-        NewLocationRequest newLocationRequest = new NewLocationRequest(
-                name,
-                uniqueIdCombineLatLng,
-                latitudeDouble,
-                longitudeDouble
-        );
+        UpdateNoteBody updatedNote = new UpdateNoteBody();
+        updatedNote.setTitle(name);
+        updatedNote.setDescription(content);
 
-        NewNoteRequest newNoteRequest = new NewNoteRequest(
-                name,
-                content,
+        UpdateNoteRequest updateNoteRequest = new UpdateNoteRequest(
+                updatedNote,
                 userId,
-                tagStrArr,
-                newLocationRequest
+                tagStrArr
         );
+        Log.d("update note request:", new Gson().toJson(updateNoteRequest));
 
-        Log.d("new note request:", new Gson().toJson(newNoteRequest));
-
-        Call<NoteResponse> call = RetrofitClient.getInstance().getMyApi().addNote(newNoteRequest);
+        Call<NoteResponse> call = RetrofitClient.getInstance().getMyApi().updateNote(noteId, updateNoteRequest);
 
         call.enqueue(new retrofit2.Callback<NoteResponse>() {
             @Override
@@ -213,27 +236,23 @@ public class CreateNoteActivity extends AppCompatActivity {
                 if(response.isSuccessful()) {
                     NoteResponse resUser = response.body();
                     Note note = resUser.getNote();
-                    Log.w("Note add success", new Gson().toJson(note));
-                    Toast.makeText(getApplicationContext(), "Added Successful", Toast.LENGTH_SHORT).show();
+                    Log.w("UpdateNote", new Gson().toJson(note));
+                    Toast.makeText(getApplicationContext(), "Edited Successful", Toast.LENGTH_SHORT).show();
 
                     MapsActivity.updateMarker(note);
+
                 } else {
-                    Log.w("Note add failed", "Failed");
-                    Toast.makeText(getApplicationContext(), "Failed to add note", Toast.LENGTH_SHORT).show();
+                    Log.w("Note update failed", "Failed");
+                    Toast.makeText(getApplicationContext(), "Failed to edit note", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<NoteResponse> call, Throwable t) {
-                Log.d("Note add failed", t.toString());
-                Toast.makeText(getApplicationContext(), "Failed to add note", Toast.LENGTH_LONG).show();  // ??? <- SOMETIME GOES IN HERE ???
+                Log.d("Note update failed", t.getMessage());
+                Toast.makeText(getApplicationContext(), "Failed to edit note", Toast.LENGTH_LONG).show();  // ??? <- SOMETIME GOES IN HERE ???
             }
         });
-    }
-
-    @Override
-    public void onBackPressed() {
-        finish();
     }
 
     public void cancelCreateNote(View view) {
