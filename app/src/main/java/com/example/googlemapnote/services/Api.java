@@ -13,6 +13,7 @@ import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface Api {
     String API_VERSION = "v1";
@@ -21,6 +22,11 @@ public interface Api {
 
     @GET("notes")
     Call<NoteList> getNotes();
+
+    @GET("get-self-notes")
+    Call<NoteList> getUserNotes(
+            @Query("user_id") int id
+    );
 
     @POST("notes")
     Call<NoteResponse> addNote(

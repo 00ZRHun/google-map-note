@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="list_item_height">62dp</dimen>
+    <dimen name="margin_medium">18dp</dimen>
+    <dimen name="margin_hard">28dp</dimen>
+    <dimen name="padding_medium">18dp</dimen>
+
+</resources>
