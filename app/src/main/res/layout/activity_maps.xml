@@ -16,24 +16,41 @@
         android:scrollbars="vertical" />
     <!-- android:onClick="showCurrentPlace" -->
 
-    <RelativeLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:id="@+id/relativeLayout">
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/floatingActionButton3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
             android:layout_marginEnd="26dp"
             android:layout_marginRight="26dp"
             android:layout_marginBottom="37dp"
             android:background="@color/black"
             android:clickable="true"
             android:onClick="startCreateNoteActivity"
-            android:src="@drawable/ic_baseline_add_24" />
-    </RelativeLayout>
+            android:src="@drawable/ic_baseline_add_24"
+            map:layout_constraintBottom_toBottomOf="parent"
+            map:layout_constraintEnd_toEndOf="parent"
+            map:layout_constraintRight_toRightOf="parent" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/refreshFloatingButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="26dp"
+            android:layout_marginRight="26dp"
+            android:layout_marginBottom="26dp"
+            android:onClick="refreshMarker"
+            android:clickable="true"
+            map:layout_constraintBottom_toTopOf="@+id/floatingActionButton3"
+            map:layout_constraintEnd_toEndOf="parent"
+            map:layout_constraintRight_toRightOf="parent"
+            map:srcCompat="@drawable/refresh" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!--Show all the nearby position--><!-- NOT setup yet, maybe will be considered later-->
     <!--<menu xmlns:android="http://schemas.android.com/apk/res/android"

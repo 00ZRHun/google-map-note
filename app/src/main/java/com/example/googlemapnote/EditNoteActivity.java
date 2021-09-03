@@ -29,6 +29,8 @@ import android.widget.Toast;
 
 import com.example.googlemapnote.adapters.NoteListAdapter;
 import com.example.googlemapnote.controllers.RetrofitClient;
+import com.example.googlemapnote.models.notes.DeleteNoteBody;
+import com.example.googlemapnote.models.notes.DeleteNoteResponse;
 import com.example.googlemapnote.models.notes.Note;
 import com.example.googlemapnote.models.notes.NoteResponse;
 import com.example.googlemapnote.models.notes.UpdateNoteBody;
@@ -464,5 +466,68 @@ public class EditNoteActivity extends AppCompatActivity {
         }
         String prev = txtContent.getText().toString();
         txtContent.setText(prev + s);
+    }
+
+    public void confirmNoteDelete(View view) {
+        AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
+        builder1.setMessage("Delete this note?");
+        builder1.setCancelable(true);
+
+        builder1.setPositiveButton(
+                "Yes",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        deleteNote();
+                        dialog.cancel();
+                    }
+                });
+
+        builder1.setNegativeButton(
+                "No",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+
+        AlertDialog alert11 = builder1.create();
+        alert11.show();
+    }
+
+    public void deleteNote() {
+        int userId = GlobalClass.getInstance().getCurrentUser().getId();
+
+        DeleteNoteBody deleteNote = new DeleteNoteBody(userId);
+
+        try {
+            Call<DeleteNoteResponse> call = RetrofitClient.getInstance().getMyApi().deleteNote(noteId, deleteNote);
+            call.enqueue(new retrofit2.Callback<DeleteNoteResponse>() {
+                @Override
+                public void onResponse(Call<DeleteNoteResponse> call, retrofit2.Response<DeleteNoteResponse> response) {
+                    if(response.isSuccessful()) {
+                        Toast.makeText(getApplicationContext(), "Deleted Successful", Toast.LENGTH_SHORT).show();
+
+                        if(fromMaps)
+                            MapsActivity.deleteMarker();
+                    } else {
+                        Log.w("Note update failed", "Failed");
+                        Toast.makeText(getApplicationContext(), "Failed to edit note", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<DeleteNoteResponse> call, Throwable t) {
+                    Log.d("Note delete failed", t.getMessage());
+                    Toast.makeText(getApplicationContext(), "Failed to edit note", Toast.LENGTH_LONG).show();  // ??? <- SOMETIME GOES IN HERE ???
+                }
+            });
+        }catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+        }
+
+    }
+
+    private void leave() {
+//        super.finish();
     }
 }

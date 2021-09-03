@@ -183,6 +183,12 @@ public class MapsActivity extends MenusActivity
         drawMarker(selectedMarker.getPosition(), note);
     }
 
+    public static void deleteMarker() {
+        selectedMarker.remove();
+//        Marker markerName = mGoogleMap.addMarker(new MarkerOptions().position(deletedElement).title("Title"));
+//        markerName.remove();
+    }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         // get the deleted element if any
@@ -521,5 +527,7 @@ public class MapsActivity extends MenusActivity
         super.onDestroy();
     }
 
-
+    public void refreshMarker(View view) {
+        getNotes();
+    }
 }

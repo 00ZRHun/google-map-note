@@ -1,5 +1,7 @@
 package com.example.googlemapnote.services;
 
+import com.example.googlemapnote.models.notes.DeleteNoteBody;
+import com.example.googlemapnote.models.notes.DeleteNoteResponse;
 import com.example.googlemapnote.models.notes.NewNoteRequest;
 import com.example.googlemapnote.models.notes.NoteList;
 import com.example.googlemapnote.models.notes.NoteResponse;
@@ -9,7 +11,9 @@ import com.example.googlemapnote.models.user.UserResponse;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.HTTP;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
@@ -38,6 +42,12 @@ public interface Api {
             @Path("id") int id,
             @Body UpdateNoteRequest note
             );
+
+    @HTTP(method = "DELETE", path = "notes/{id}", hasBody = true)
+    Call<DeleteNoteResponse> deleteNote(
+            @Path("id") int id,
+            @Body DeleteNoteBody body
+    );
 
     @POST("login")
     Call<UserResponse> login(
