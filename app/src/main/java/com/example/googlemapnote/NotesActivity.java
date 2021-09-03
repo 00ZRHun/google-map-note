@@ -3,6 +3,7 @@ package com.example.googlemapnote;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.app.ProgressDialog;
 import android.os.Bundle;
@@ -28,6 +29,7 @@ import retrofit2.Response;
 public class NotesActivity extends MenusActivity {
 
     private static final String TAG = "NotesActivity";
+    private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
     private TextView emptyView;
 
@@ -37,14 +39,30 @@ public class NotesActivity extends MenusActivity {
         setContentView(R.layout.activity_notes);
         getNavigationView().setCheckedItem(R.id.nav_notes);  // remain selecting the menu item after user click it
 
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_container);
         recyclerView = findViewById(R.id.note_list_recycle_view);
         emptyView = findViewById(R.id.empty_view);
+
+        // handle pull-to-refresh
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                swipeRefreshLayout.setRefreshing(false);
+                getNotes();
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        Log.d(TAG, "In NotesActivity");
         getNotes();
-        // show notes list here...
+        super.onResume();
     }
 
     private void getNotes() {
         int userId = GlobalClass.getInstance().getCurrentUser().getId();
+        Log.d(TAG, "userId:" + userId);
         Call<NoteList> call = RetrofitClient.getInstance().getMyApi().getUserNotes(userId);
 
         // Set up progress before call
@@ -67,6 +85,8 @@ public class NotesActivity extends MenusActivity {
 
                 if(notelist.getNotes().size() == 0)
                     emptyView.setVisibility(View.VISIBLE);
+                else
+                    emptyView.setVisibility(View.INVISIBLE);
 
                 // add data into recyleview via adapter
                 NoteListAdapter adapter = new NoteListAdapter(notelist);

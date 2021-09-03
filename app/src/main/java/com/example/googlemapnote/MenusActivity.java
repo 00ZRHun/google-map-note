@@ -146,12 +146,12 @@ public class MenusActivity extends AppCompatActivity implements NavigationView.O
             case R.id.nav_profile:
                 startActivity(new Intent(MenusActivity.this, ProfileActivity.class));
                 break;
-            case R.id.nav_share:
-                Toast.makeText(this, "Share", Toast.LENGTH_SHORT).show();
-                break;
-            case R.id.nav_send:
-                Toast.makeText(this, "Send", Toast.LENGTH_SHORT).show();
-                break;
+//            case R.id.nav_share:
+//                Toast.makeText(this, "Share", Toast.LENGTH_SHORT).show();
+//                break;
+//            case R.id.nav_send:
+//                Toast.makeText(this, "Send", Toast.LENGTH_SHORT).show();
+//                break;
         }
 
         drawer.closeDrawer(GravityCompat.START);

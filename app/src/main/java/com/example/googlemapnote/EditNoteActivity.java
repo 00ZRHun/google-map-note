@@ -1,12 +1,22 @@
 package com.example.googlemapnote;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -17,6 +27,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.googlemapnote.adapters.NoteListAdapter;
 import com.example.googlemapnote.controllers.RetrofitClient;
 import com.example.googlemapnote.models.notes.Note;
 import com.example.googlemapnote.models.notes.NoteResponse;
@@ -24,10 +35,17 @@ import com.example.googlemapnote.models.notes.UpdateNoteBody;
 import com.example.googlemapnote.models.notes.UpdateNoteRequest;
 import com.example.googlemapnote.models.tag.Tag;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.gson.Gson;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +56,9 @@ import retrofit2.Call;
 
 public class EditNoteActivity extends AppCompatActivity {
 
+    private static final String TAG = "EditNoteActivity";
+
+    private Boolean fromMaps = false;
     private int noteId;
 
     private EditText txtName;
@@ -56,10 +77,52 @@ public class EditNoteActivity extends AppCompatActivity {
 
     private GlobalClass globalVariable;
 
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private double mAccel;
+    private double mAccelCurrent;
+    private double mAccelLast;
+    private int count = 0;
+
+    private TextRecognizer recognizer;
+
+    int SELECT_PICTURE = 200;
+
+    private SensorEventListener sensorEventListener = new SensorEventListener() {
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            float x = event.values[0];
+            float y = event.values[1];
+            float z = event.values[2];
+
+            mAccelCurrent = Math.sqrt((x*x + y*y + z*z));
+            mAccel = Math.abs(mAccelCurrent - mAccelLast);
+            mAccelLast = mAccelCurrent;
+
+            if(mAccel > 2) {
+                count++;
+
+                if(count == 2) {
+                    shakeDetect();
+//                    Toast.makeText(getContext(), "Shake detected.", Toast.LENGTH_SHORT).show();
+                    count = 0;
+                }
+            }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_update_note);
+
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalVariable = (GlobalClass) getApplicationContext();
@@ -67,7 +130,17 @@ public class EditNoteActivity extends AppCompatActivity {
         // [START get_data_from_MapsActivity_intent]
         Intent intent = getIntent();
 
-        Note note = (Note) intent.getExtras().getSerializable(MapsActivity.EDIT_NOTE_INTENT);
+        Note note = null;
+
+        if(intent.getExtras().getSerializable(MapsActivity.EDIT_NOTE_INTENT) != null) {
+            note = (Note) intent.getExtras().getSerializable(MapsActivity.EDIT_NOTE_INTENT);
+            fromMaps = true;
+        }
+        else if(intent.getExtras().getSerializable(NoteListAdapter.EDIT_NOTE_INTENT) != null) {
+            // from listview
+            note = (Note) intent.getExtras().getSerializable(NoteListAdapter.EDIT_NOTE_INTENT);
+        }
+
         noteId = note.getId();
         List<Tag> tagList = note.getTagList();
 
@@ -168,6 +241,12 @@ public class EditNoteActivity extends AppCompatActivity {
                 }
             }
         });
+        fabOCR.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                imageChooser();
+            }
+        });
         /* [END Event Listeners] */
 
 //
@@ -175,6 +254,18 @@ public class EditNoteActivity extends AppCompatActivity {
 //        TextView textViewLatLng = (TextView) findViewById(R.id.textViewLatLng);
 //        textViewLatLng.setText("latitude: " +latitudeDouble+ "; longitude: " +longitudeDouble);
         // [END get_data_from_MapsActivity_intent] */
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mSensorManager.registerListener(sensorEventListener, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mSensorManager.unregisterListener(sensorEventListener);
     }
 
     @Override
@@ -197,6 +288,32 @@ public class EditNoteActivity extends AppCompatActivity {
         return super.dispatchTouchEvent(ev);
     }
 
+    private void shakeDetect() {
+        AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
+        builder1.setMessage("Delete all text?");
+        builder1.setCancelable(true);
+
+        builder1.setPositiveButton(
+                "Yes",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        txtContent.getText().clear();
+                        dialog.cancel();
+                    }
+                });
+
+        builder1.setNegativeButton(
+                "No",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+
+        AlertDialog alert11 = builder1.create();
+        alert11.show();
+    }
+
     private void hideKeyboard(Activity activity) {
         txtContent.clearFocus();
         txtName.clearFocus();
@@ -213,9 +330,17 @@ public class EditNoteActivity extends AppCompatActivity {
 
     public void updateNote(View view) {
         String name = txtName.getText().toString();
-        String[] tagStrArr = txtTags.getText().toString().split(",");
+        String[] tagStrArr = null;
+
+        if(txtTags.getText().toString().split(",")[0] == "")
+            tagStrArr = new String[0];
+        else
+            tagStrArr = txtTags.getText().toString().split(",");
+
         String content = txtContent.getText().toString();
         int userId = GlobalClass.getInstance().getCurrentUser().getId();
+
+        Log.d(TAG,"Content"+tagStrArr.length);
 
         UpdateNoteBody updatedNote = new UpdateNoteBody();
         updatedNote.setTitle(name);
@@ -239,7 +364,8 @@ public class EditNoteActivity extends AppCompatActivity {
                     Log.w("UpdateNote", new Gson().toJson(note));
                     Toast.makeText(getApplicationContext(), "Edited Successful", Toast.LENGTH_SHORT).show();
 
-                    MapsActivity.updateMarker(note);
+                    if(fromMaps)
+                        MapsActivity.updateMarker(note);
 
                 } else {
                     Log.w("Note update failed", "Failed");
@@ -257,5 +383,86 @@ public class EditNoteActivity extends AppCompatActivity {
 
     public void cancelCreateNote(View view) {
         super.finish();
+    }
+
+    // this function is triggered when
+    // the Select Image Button is clicked
+    void imageChooser() {
+
+        // create an instance of the
+        // intent of the type image
+        Intent i = new Intent(
+                Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        );
+        i.setType("image/*");
+        i.setAction(Intent.ACTION_GET_CONTENT);
+
+        // pass the constant to compare it
+        // with the returned requestCode
+        startActivityForResult(Intent.createChooser(i, "Select Picture"), SELECT_PICTURE);
+    }
+
+    // this function is triggered when user
+    // selects the image from the imageChooser
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        Log.d(TAG, "Result code" + resultCode);
+
+        if (resultCode == RESULT_OK) {
+
+            // compare the resultCode with the
+            // SELECT_PICTURE constant
+            if (requestCode == SELECT_PICTURE) {
+                // Get the url of the image from data
+                Uri selectedImageUri = data.getData();
+                if (null != selectedImageUri) {
+                    // update the preview image in the layout
+//                    IVPreviewImage.setImageURI(selectedImageUri);
+                    recognizer = TextRecognition.getClient();
+                    Bitmap bitmap = null;
+
+                    try {
+                        bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImageUri);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    InputImage image = InputImage.fromBitmap(bitmap, 0);
+
+                    recognizer
+                            .process(image)
+                            .addOnSuccessListener(new OnSuccessListener<Text>() {
+                                @Override
+                                public void onSuccess(@NonNull Text texts) {
+                                    processTextRecognitionResult(texts);
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                }
+            }
+        }
+    }
+
+    private void processTextRecognitionResult(Text texts) {
+        List<Text.TextBlock> blocks = texts.getTextBlocks();
+        String s = "";
+        for (int i = 0; i < blocks.size(); i++) {
+            List<Text.Line> lines = blocks.get(i).getLines();
+            for (int j = 0; j < lines.size(); j++) {
+                List<Text.Element> elements = lines.get(j).getElements();
+                for (int k = 0; k < elements.size(); k++) {
+                    s += elements.get(k).getText() + " ";
+                }
+            }
+        }
+        String prev = txtContent.getText().toString();
+        txtContent.setText(prev + s);
     }
 }

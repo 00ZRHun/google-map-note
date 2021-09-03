@@ -129,11 +129,11 @@ public class MainActivity_V1 extends AppCompatActivity implements NavigationView
                         new ProfileFragment()).commit();*/
                 startActivity(new Intent(this, ProfileActivity.class));
                 break;
-            case R.id.nav_share:
-                Toast.makeText(this, "Share", Toast.LENGTH_SHORT).show();
-                break;
-            case R.id.nav_send:
-                Toast.makeText(this, "Send", Toast.LENGTH_SHORT).show();
+//            case R.id.nav_share:
+//                Toast.makeText(this, "Share", Toast.LENGTH_SHORT).show();
+//                break;
+//            case R.id.nav_send:
+//                Toast.makeText(this, "Send", Toast.LENGTH_SHORT).show();
                 //                break;
         }
 

@@ -1,5 +1,6 @@
 package com.example.googlemapnote.adapters;
 
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,7 @@ import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.googlemapnote.EditNoteActivity;
 import com.example.googlemapnote.R;
 import com.example.googlemapnote.models.notes.Note;
 import com.example.googlemapnote.models.notes.NoteList;
@@ -19,6 +21,7 @@ import com.google.gson.Gson;
 public class NoteListAdapter extends RecyclerView.Adapter<NoteListAdapter.ViewHolder> {
 
     private static final String TAG = "NoteListAdapter";
+    public static final String EDIT_NOTE_INTENT = "com.example.googlemapnote.edit_note";
     private NoteList noteList;
 
 
@@ -76,7 +79,11 @@ public class NoteListAdapter extends RecyclerView.Adapter<NoteListAdapter.ViewHo
         viewHolder.linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(view.getContext(),"click on item: "+note.getTitle(),Toast.LENGTH_SHORT).show();
+                Intent editNoteIntent = new Intent(view.getContext(), EditNoteActivity.class);
+                editNoteIntent.putExtra(EDIT_NOTE_INTENT, note);
+
+                view.getContext().startActivity(editNoteIntent);
+//                Toast.makeText(view.getContext(),"click on item: "+note.getTitle(),Toast.LENGTH_SHORT).show();
             }
         });
     }

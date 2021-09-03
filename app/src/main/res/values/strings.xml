@@ -12,5 +12,5 @@
     <string name="content_hint">Write something here. Shake to clear all text.</string>
     <string name="image_to_text">Image to text</string>
     <string name="btn_edit_lbl">Edit Note</string>
-    <string name="no_data_available">You have no notes at this moment</string>
+    <string name="no_data_available">You have no notes at this moment, or pull-down to refresh.</string>
 </resources>
