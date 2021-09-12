@@ -77,6 +77,7 @@ public class CreateNoteActivity extends AppCompatActivity {
     private double mAccelCurrent;
     private double mAccelLast;
     private int count = 0;
+    private boolean isAlertShowed = false;
 
     private TextRecognizer recognizer;
 
@@ -228,6 +229,9 @@ public class CreateNoteActivity extends AppCompatActivity {
     }
 
     private void shakeDetect() {
+        if(isAlertShowed) return;
+
+        isAlertShowed = true;
         AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
         builder1.setMessage("Delete all text?");
         builder1.setCancelable(true);
@@ -237,6 +241,7 @@ public class CreateNoteActivity extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         txtContent.getText().clear();
+                        isAlertShowed = false;
                         dialog.cancel();
                     }
                 });
@@ -246,6 +251,7 @@ public class CreateNoteActivity extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();
+                        isAlertShowed = false;
                     }
                 });
 

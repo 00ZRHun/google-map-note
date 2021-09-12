@@ -85,6 +85,7 @@ public class EditNoteActivity extends AppCompatActivity {
     private double mAccelCurrent;
     private double mAccelLast;
     private int count = 0;
+    private boolean isAlertShowed = false;
 
     private TextRecognizer recognizer;
 
@@ -291,6 +292,9 @@ public class EditNoteActivity extends AppCompatActivity {
     }
 
     private void shakeDetect() {
+        if(isAlertShowed == true) return;
+        isAlertShowed = true;
+
         AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
         builder1.setMessage("Delete all text?");
         builder1.setCancelable(true);
@@ -300,6 +304,7 @@ public class EditNoteActivity extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         txtContent.getText().clear();
+                        isAlertShowed = false;
                         dialog.cancel();
                     }
                 });
@@ -309,6 +314,7 @@ public class EditNoteActivity extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();
+                        isAlertShowed = false;
                     }
                 });
 
@@ -487,6 +493,7 @@ public class EditNoteActivity extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();
+                        isAlertShowed = false;
                     }
                 });
 
@@ -494,7 +501,8 @@ public class EditNoteActivity extends AppCompatActivity {
         alert11.show();
     }
 
-    public void deleteNote() {
+    public void
+    deleteNote() {
         int userId = GlobalClass.getInstance().getCurrentUser().getId();
 
         DeleteNoteBody deleteNote = new DeleteNoteBody(userId);
@@ -513,6 +521,7 @@ public class EditNoteActivity extends AppCompatActivity {
                         Log.w("Note update failed", "Failed");
                         Toast.makeText(getApplicationContext(), "Failed to edit note", Toast.LENGTH_SHORT).show();
                     }
+                    leave();
                 }
 
                 @Override
@@ -528,6 +537,6 @@ public class EditNoteActivity extends AppCompatActivity {
     }
 
     private void leave() {
-//        super.finish();
+        super.finish();
     }
 }
